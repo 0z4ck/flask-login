@@ -1,10 +1,19 @@
 from flask import Flask, render_template, flash, redirect, url_for, Response, request, session, abort
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user 
+from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
-import time, subprocess
+import time
+import subprocess
 from datetime import datetime
 
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
+
+port = int(os.environ.get('APP_PORT'))
 
 
 users = {}
@@ -19,7 +28,7 @@ login_manager.init_app(app)
 
 login_manager.login_view = 'login'
 
-# callback to reload the user object        
+# callback to reload the user object
 @login_manager.user_loader
 def load_user(userid):
     return User(userid)
@@ -31,24 +40,24 @@ class User(db.Model):
     username = db.Column('username', db.String(20), unique=True , index=True)
     password = db.Column('password' , db.String(10))
     registered_on = db.Column('registered_on' , db.DateTime)
- 
+
     def __init__(self , username ,password, d=1):
         self.username = username
         self.password = password
         self.registered_on = datetime.now()
- 
+
     def is_authenticated(self):
         return True
- 
+
     def is_active(self):
         return True
- 
+
     def is_anonymous(self):
         return False
- 
+
     def get_id(self):
         return unicode(self.id)
- 
+
     def __repr__(self):
         return '<User %r>' % (self.username)
 
@@ -61,7 +70,7 @@ def register():
     db.session.commit()
     flash('User successfully registered')
     return redirect(url_for('login'))
- 
+
 
 @app.route('/login',methods=['GET','POST'])
 def login():
@@ -79,7 +88,7 @@ def login():
     #return redirect(request.args.get('next') or url_for('home'))
 
 @app.route('/home',methods=['GET','POST'])
-def home(): 
+def home():
 
     return User.username
 
@@ -91,13 +100,13 @@ def home():
 #def home():
 #    return Response("Hello World!")
 #
-# 
+#
 ## somewhere to login
 #@app.route("/login", methods=["GET", "POST"])
 #def login():
 #    if request.method == 'POST':
 #        username = request.form['username']
-#        password = request.form['password']        
+#        password = request.form['password']
 #        if password == username + "_secret":
 #            id = username.split('user')[1]
 #            user = User(id)
@@ -127,11 +136,11 @@ def home():
 #@app.errorhandler(401)
 #def page_not_found(e):
 #    return Response('<p>Login failed</p>')
-    
-    
+
+
 if __name__ == "__main__":
     app.secret_key = 'wakaikara sugu shikoritagaru'
-    app.run(port="80", host="0.0.0.0")
+    app.run(port=port, host="0.0.0.0")
 
 """@login_manager.user_loader
 def load_user(user_id):
