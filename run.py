@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
 from flask import Flask, render_template, flash, redirect, url_for, Response, request, session, abort
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 import time
 import subprocess
-from datetime import datetime
 
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
+
+from application import app, User, db
 
 dotenv_path = join(dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -18,15 +20,12 @@ port = int(os.environ.get('APP_PORT'))
 
 users = {}
 
-app = Flask(__name__, static_url_path='')
-create_engine('sqlite:///.userDB.sqlite3')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///.userDB.sqlite3'
-db = SQLAlchemy(app)
-
+db.create_all()
 login_manager = LoginManager()
 login_manager.init_app(app)
 
 login_manager.login_view = 'login'
+
 
 # callback to reload the user object
 @login_manager.user_loader
@@ -34,63 +33,38 @@ def load_user(userid):
     return User(userid)
 
 
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column('user_id',db.Integer , primary_key=True)
-    username = db.Column('username', db.String(20), unique=True , index=True)
-    password = db.Column('password' , db.String(10))
-    registered_on = db.Column('registered_on' , db.DateTime)
-
-    def __init__(self , username ,password, d=1):
-        self.username = username
-        self.password = password
-        self.registered_on = datetime.now()
-
-    def is_authenticated(self):
-        return True
-
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        return unicode(self.id)
-
-    def __repr__(self):
-        return '<User %r>' % (self.username)
-
-@app.route('/register' , methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'GET':
         return render_template('register.html')
-    user = User(request.form['username'] , request.form['password'])
+    user = User(request.form['username'], request.form['password'])
     db.session.add(user)
     db.session.commit()
     flash('User successfully registered')
     return redirect(url_for('login'))
 
 
-@app.route('/login',methods=['GET','POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
         return render_template('login.html')
     username = request.form['username']
     password = request.form['password']
-    registered_user = User.query.filter_by(username=username,password=password).first()
+    registered_user = User.query.filter_by(username=username, password=password).first()
     if registered_user is None:
-        flash('Username or Password is invalid' , 'error')
+        flash('Username or Password is invalid', 'error')
         return redirect(url_for('login'))
     login_user(registered_user)
     flash('Logged in successfully')
     return redirect(url_for('home'))
-    #return redirect(request.args.get('next') or url_for('home'))
+    # return redirect(request.args.get('next') or url_for('home'))
 
-@app.route('/home',methods=['GET','POST'])
+
+@app.route('/home', methods=['GET', 'POST'])
+@login_required
 def home():
 
-    return User.username
+    return g.username
 
 #users = [User(id) for id in range(1, 21)]
 #
