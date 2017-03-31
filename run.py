@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask import Flask, render_template, flash, redirect, url_for, Response, request, session, abort
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
+from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 import time
@@ -22,15 +22,14 @@ users = {}
 
 db.create_all()
 login_manager = LoginManager()
-login_manager.init_app(app)
-
 login_manager.login_view = 'login'
+login_manager.init_app(app)
 
 
 # callback to reload the user object
 @login_manager.user_loader
 def load_user(userid):
-    return User(userid)
+    return User.get_by_id(userid)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -64,7 +63,7 @@ def login():
 @login_required
 def home():
 
-    return g.username
+    return current_user.username
 
 #users = [User(id) for id in range(1, 21)]
 #

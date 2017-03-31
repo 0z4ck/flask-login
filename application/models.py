@@ -27,5 +27,9 @@ class User(db.Model):
     def get_id(self):
         return unicode(self.id)
 
+    @classmethod
+    def get_by_id(self, user_id):
+        return User.query.get(user_id)
+
     def __repr__(self):
         return '<User %r>' % (self.username)
